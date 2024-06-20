@@ -1,6 +1,6 @@
 # Cosmos.Threading
 
-[![Build Status](https://dev.azure.com/DerekGn/GitHub/_apis/build/status/DerekGn.HexIO?branchName=main)](https://dev.azure.com/DerekGn/GitHub/_build/latest?definitionId=5&branchName=main)
+[![Build Status](https://derekgn.visualstudio.com/GitHub/_apis/build/status%2FDerekGn.Cosmos.Threading?branchName=main)](https://derekgn.visualstudio.com/GitHub/_build/latest?definitionId=14&branchName=main)
 
 [![NuGet Badge](https://buildstats.info/nuget/Cosmos.Threading)](https://www.nuget.org/packages/Cosmos.Threading/)
 

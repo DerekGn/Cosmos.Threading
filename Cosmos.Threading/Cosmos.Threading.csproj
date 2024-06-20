@@ -12,8 +12,8 @@
     <Product>Cosmos Threading</Product>
     <Description>A .Net Core library that contains</Description>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/DerekGn/MCP2221IO</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/DerekGn/MCP2221IO</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/DerekGn/Cosmos.Threading</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/DerekGn/Cosmos.Threading</RepositoryUrl>
     <PackageReleaseNotes>
         1.0.0 Initial Version
     </PackageReleaseNotes>
