@@ -25,7 +25,7 @@ steps:
       command: custom
       custom: pack
       arguments: >
-        $(BuildParameters.solution)
+        Cosmos.Threading.sln
         --output $(Build.ArtifactStagingDirectory)
         -p:PackageVersion=$(PackageVersion)
         -p:Configuration=$(BuildConfiguration)
