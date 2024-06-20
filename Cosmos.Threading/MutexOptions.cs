@@ -38,11 +38,5 @@ namespace Cosmos.Threading
         /// </summary>
         [Required]
         public required string DatabaseName { get; set; } = string.Empty;
-
-        /// <summary>
-        /// The cosmos mutex instance name
-        /// </summary>
-        [Required]
-        public required string Name { get; set; } = string.Empty;
     }
 }

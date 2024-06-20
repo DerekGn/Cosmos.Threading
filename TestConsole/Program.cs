@@ -27,11 +27,25 @@ using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
+using Mutex = Cosmos.Threading.Mutex;
 
 namespace TestConsole
 {
     internal class Program
     {
+        private static CosmosClient CreateCosmosClient(string connectionString)
+        {
+            var cosmosOptions = new CosmosClientOptions()
+            {
+                SerializerOptions = new CosmosSerializationOptions()
+                {
+                    PropertyNamingPolicy = CosmosPropertyNamingPolicy.CamelCase
+                }
+            };
+
+            return new CosmosClient(connectionString, cosmosOptions);
+        }
+
         private static async Task Main(string[] args)
         {
             var services = new ServiceCollection();
@@ -53,6 +67,7 @@ namespace TestConsole
                 .AddLogging()
                 .AddSingleton(CreateCosmosClient(configuration["Cosmos:ConnectionString"]))
                 .AddSingleton<MutexInitialization>()
+                .AddSingleton<Mutex>()
                 .AddSingleton<Executor>();
 
             services
@@ -64,19 +79,6 @@ namespace TestConsole
                 .BuildServiceProvider()
                 .GetService<Executor>()
                 !.ExecuteAsync();
-        }
-
-        private static CosmosClient CreateCosmosClient(string connectionString)
-        {
-            var cosmosOptions = new CosmosClientOptions()
-            {
-                SerializerOptions = new CosmosSerializationOptions()
-                {
-                    PropertyNamingPolicy = CosmosPropertyNamingPolicy.CamelCase
-                }
-            };
-
-            return new CosmosClient(connectionString, cosmosOptions);
         }
     }
 }

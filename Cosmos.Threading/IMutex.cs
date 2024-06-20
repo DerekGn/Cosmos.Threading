@@ -27,7 +27,7 @@ namespace Cosmos.Threading
     public interface IMutex
     {
         /// <summary>
-        /// Acquire the distributed mutex
+        /// Acquire the default distributed mutex
         /// </summary>
         /// <param name="owner">The owner moniker for the thread/process acquiring the <see cref="IMutex"/> instance</param>
         /// <param name="leaseExpiry">The maximum length if time that the mutex can be held</param>
@@ -36,12 +36,26 @@ namespace Cosmos.Threading
         /// <remarks>
         /// The owner must be consistent between <seealso cref="AcquireAsync(string, TimeSpan, CancellationToken)"/> and <seealso cref="ReleaseAsync(string, CancellationToken)"/>
         /// The <paramref name="leaseExpiry"/> sets the upper limit for the mutex lease.
-        /// After this time the mutex is released and can be aquired again by another process. 
+        /// After this time the mutex is released and can be acquired again by another process. 
         /// </remarks>
         Task<bool> AcquireAsync(string owner, TimeSpan leaseExpiry, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Release the distributed mutex
+        /// Acquire a named distributed mutex
+        /// </summary>
+        /// <param name="owner">The owner moniker for the thread/process acquiring the <see cref="IMutex"/> instance</param>
+        /// <param name="mutexName">A mutex instance name</param>
+        /// <param name="leaseExpiry">The maximum length if time that the mutex can be held</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to cancel the operation</param>
+        /// <returns></returns>
+        /// The owner must be consistent between <seealso cref="AcquireAsync(string, string TimeSpan, CancellationToken)"/> and <seealso cref="ReleaseAsync(string, string, CancellationToken)"/>
+        /// The <paramref name="leaseExpiry"/> sets the upper limit for the mutex lease.
+        /// After this time the mutex is released and can be acquired again by another process. 
+        /// </remarks>
+        Task<bool> AcquireAsync(string owner, string mutexName, TimeSpan leaseExpiry, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Release the default distributed mutex
         /// </summary>
         /// <param name="owner">The owner moniker for the thread/process releasing the <see cref="IMutex"/> instance</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to cancel the operation</param>
@@ -50,5 +64,17 @@ namespace Cosmos.Threading
         /// The owner must be consistent between <seealso cref="AcquireAsync(string, TimeSpan, CancellationToken)"/> and <seealso cref="ReleaseAsync(string, CancellationToken)"/>
         /// </remarks>
         Task<bool> ReleaseAsync(string owner, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Release a named distributed mutex
+        /// </summary>
+        /// <param name="owner">The owner moniker for the thread/process releasing the <see cref="IMutex"/> instance</param>
+        /// <param name="mutexName">A mutex instance name</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to cancel the operation</param>
+        /// <returns>True if the mutex is released</returns>
+        /// <remarks>
+        /// The owner must be consistent between <seealso cref="AcquireAsync(string, string, TimeSpan, CancellationToken)"/> and <seealso cref="ReleaseAsync(string, string, CancellationToken)"/>
+        /// </remarks>
+        Task<bool> ReleaseAsync(string owner, string mutexName, CancellationToken cancellationToken = default);
     }
 }

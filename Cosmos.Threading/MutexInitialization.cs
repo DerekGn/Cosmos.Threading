@@ -31,8 +31,6 @@ namespace Cosmos.Threading
 {
     public class MutexInitialization
     {
-        public const string MutexContainerName = "mutexcontainer";
-
         private readonly CosmosClient _client;
         private readonly ILogger<MutexInitialization> _logger;
         private readonly IOptions<MutexOptions> _options;
@@ -55,18 +53,31 @@ namespace Cosmos.Threading
         }
 
         /// <summary>
-        /// 
+        /// Initialize the default mutex instance
         /// </summary>
-        /// <param name="cancellationToken"></param>
-        public async Task InitializeAsync(CancellationToken cancellationToken = default)
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to cancel the operation</param>
+        public async Task InitializeAsync(
+            CancellationToken cancellationToken = default)
         {
-            _logger.LogDebug("Initializing Mutex Id: [{id}]", _options.Value.Name);
+            await InitializeAsync(Mutex.DefaultMutexName, cancellationToken);
+        }
+
+        /// <summary>
+        /// Initialize a named mutex instance
+        /// </summary>
+        /// <param name="mutexName">The mutex instance name</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/> to cancel the operation</param>
+        public async Task InitializeAsync(
+            string mutexName,
+            CancellationToken cancellationToken = default)
+        {
+            _logger.LogDebug("Initializing Mutex Id: [{id}]", mutexName);
 
             var containerResponse = await _client
                 .GetDatabase(_options.Value.DatabaseName)
                 .CreateContainerIfNotExistsAsync(new ContainerProperties()
                 {
-                    Id = MutexContainerName,
+                    Id = Mutex.MutexContainerName,
                     PartitionKeyPath = "/id"
                 },
                 cancellationToken: cancellationToken);
@@ -77,16 +88,18 @@ namespace Cosmos.Threading
                 containerResponse.RequestCharge);
 
             await CreateMutexInstanceIfNotExistAsync(
+                mutexName,
                 containerResponse.Container,
                 cancellationToken);
         }
 
         private async Task CreateMutexInstanceIfNotExistAsync(
+            string mutexName,
             Container container,
             CancellationToken cancellationToken)
         {
             var partitionKey = new PartitionKeyBuilder()
-                .Add(_options.Value.Name)
+                .Add(mutexName)
                 .Build();
 
             ItemResponse<MutexItem>? mutexResponse = null;
@@ -95,13 +108,13 @@ namespace Cosmos.Threading
             {
                 mutexResponse = await container.ReadItemAsync<MutexItem>
                 (
-                    _options.Value.Name,
+                    mutexName,
                     partitionKey,
                     cancellationToken: cancellationToken
                 );
 
                 _logger.LogDebug("Mutex [{id}] exists cost [{rus}] RUs",
-                    _options.Value.Name,
+                    mutexName,
                     mutexResponse.RequestCharge);
             }
             catch (CosmosException ex) when (ex.StatusCode == HttpStatusCode.NotFound) { }
@@ -110,7 +123,7 @@ namespace Cosmos.Threading
             {
                 var mutex = new MutexItem()
                 {
-                    Id = _options.Value.Name
+                    Id = mutexName
                 };
 
                 var mutexCreateResponse = await container.CreateItemAsync(
@@ -118,7 +131,7 @@ namespace Cosmos.Threading
                     cancellationToken: cancellationToken);
 
                 _logger.LogDebug("Mutex [{id}] created [{rus}] RUs",
-                    _options.Value.Name,
+                    mutexName,
                     mutexCreateResponse.RequestCharge);
             }
         }

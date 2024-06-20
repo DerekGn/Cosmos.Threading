@@ -32,6 +32,9 @@ namespace Cosmos.Threading
 {
     public class Mutex : IMutex
     {
+        internal const string DefaultMutexName = "default-mutex";
+        internal const string MutexContainerName = "mutexcontainer";
+
         private readonly CosmosClient _client;
         private readonly Container _container;
         private readonly ILogger<Mutex> _logger;
@@ -49,9 +52,11 @@ namespace Cosmos.Threading
             ILogger<Mutex> logger,
             IOptions<MutexOptions> options)
         {
+            _client = client ?? throw new ArgumentNullException(nameof(client));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _options = options ?? throw new ArgumentNullException(nameof(options));
-            _client = client ?? throw new ArgumentNullException(nameof(client));
+            
+            _container = _client.GetContainer(options.Value.DatabaseName, MutexContainerName);
         }
 
         /// <inheritdoc/>
@@ -60,11 +65,29 @@ namespace Cosmos.Threading
             TimeSpan leaseExpiry,
             CancellationToken cancellationToken = default)
         {
-            ValidateOwner(owner);
+            return await AcquireAsync(owner, DefaultMutexName, leaseExpiry, cancellationToken);
+        }
 
-            _logger.LogDebug("Acquiring Mutex Id: [{id}] Owner: [{owner}]", _options.Value.Name, owner);
+        /// <inheritdoc/>
+        public async Task<bool> AcquireAsync(
+            string owner,
+            string mutexName,
+            TimeSpan leaseExpiry,
+            CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(owner))
+            {
+                throw new ArgumentNullException(nameof(owner));
+            }
 
-            return await PatchAsync(DateTime.UtcNow.Add(leaseExpiry), string.Empty, owner, cancellationToken);
+            if (string.IsNullOrWhiteSpace(mutexName))
+            {
+                throw new ArgumentNullException(nameof(mutexName));
+            }
+
+            _logger.LogDebug("Acquiring Mutex Id: [{id}] Owner: [{owner}]", mutexName, owner);
+
+            return await PatchAsync(DateTime.UtcNow.Add(leaseExpiry), string.Empty, owner, mutexName, cancellationToken);
         }
 
         /// <inheritdoc/>
@@ -72,25 +95,35 @@ namespace Cosmos.Threading
             string owner,
             CancellationToken cancellationToken = default)
         {
-            ValidateOwner(owner);
-
-            _logger.LogDebug("Releasing Mutex Id: [{id}] Owner: [{owner}]", _options.Value.Name, owner);
-
-            return await PatchAsync(DateTime.UtcNow, owner, string.Empty, cancellationToken);
+            return await ReleaseAsync(owner, DefaultMutexName, cancellationToken);
         }
 
-        private static void ValidateOwner(string owner)
+        /// <inheritdoc/>
+        public async Task<bool> ReleaseAsync(
+            string owner,
+            string mutexName,
+            CancellationToken cancellationToken = default)
         {
             if (string.IsNullOrWhiteSpace(owner))
             {
                 throw new ArgumentNullException(nameof(owner));
             }
+
+            if (string.IsNullOrWhiteSpace(mutexName))
+            {
+                throw new ArgumentNullException(nameof(mutexName));
+            }
+
+            _logger.LogDebug("Releasing Mutex Id: [{id}] Owner: [{owner}]", mutexName, owner);
+
+            return await PatchAsync(DateTime.UtcNow, owner, string.Empty, mutexName, cancellationToken);
         }
 
         private async Task<bool> PatchAsync(
             DateTime leaseExpiry,
             string predicateCheck,
             string owner,
+            string mutexName,
             CancellationToken cancellationToken)
         {
             bool result = false;
@@ -102,16 +135,16 @@ namespace Cosmos.Threading
 
             PatchItemRequestOptions options = new()
             {
-                FilterPredicate = $"FROM {MutexInitialization.MutexContainerName} c " +
+                FilterPredicate = $"FROM {MutexContainerName} c " +
                 $"WHERE c.{nameof(MutexItem.Owner).ToCamelCase()} = \"{predicateCheck}\" " +
                 $"OR c.{nameof(MutexItem.LeaseExpiry).ToCamelCase()} < \"{DateTime.UtcNow.ToString("O")}\""
             };
 
             try
             {
-                var response = await _container!.PatchItemAsync<Mutex>(
-                    _options.Value.Name,
-                    new PartitionKey(_options.Value.Name),
+                var response = await _container!.PatchItemAsync<MutexItem>(
+                    mutexName,
+                    new PartitionKey(mutexName),
                     operations,
                     options,
                     cancellationToken);
