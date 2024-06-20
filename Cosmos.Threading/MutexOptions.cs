@@ -31,12 +31,21 @@ namespace Cosmos.Threading
     /// </summary>
     public class MutexOptions
     {
+        /// <summary>
+        /// The configuration section name
+        /// </summary>
         public const string ConfigurationSectionName = "Cosmos.Threading.Mutex";
 
         /// <summary>
         /// The cosmos database instance name
         /// </summary>
         [Required]
-        public required string DatabaseName { get; set; } = string.Empty;
+        public required string DatabaseId { get; set; } = string.Empty;
+
+        /// <summary>
+        /// The cosmos container name used to contain the 
+        /// </summary>
+        [Required]
+        public required string ContainerName { get; set; } = string.Empty;
     }
 }

@@ -30,10 +30,12 @@ using System.Net;
 
 namespace Cosmos.Threading
 {
+    /// <summary>
+    /// A cosmos db distributed mutex
+    /// </summary>
     public class Mutex : IMutex
     {
         internal const string DefaultMutexName = "default-mutex";
-        internal const string MutexContainerName = "mutexcontainer";
 
         private readonly CosmosClient _client;
         private readonly Container _container;
@@ -55,8 +57,8 @@ namespace Cosmos.Threading
             _client = client ?? throw new ArgumentNullException(nameof(client));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _options = options ?? throw new ArgumentNullException(nameof(options));
-            
-            _container = _client.GetContainer(options.Value.DatabaseName, MutexContainerName);
+
+            _container = _client.GetContainer(options.Value.DatabaseId, options.Value.ContainerName);
         }
 
         /// <inheritdoc/>
@@ -135,9 +137,9 @@ namespace Cosmos.Threading
 
             PatchItemRequestOptions options = new()
             {
-                FilterPredicate = $"FROM {MutexContainerName} c " +
+                FilterPredicate = $"FROM {_options.Value.ContainerName} c " +
                 $"WHERE c.{nameof(MutexItem.Owner).ToCamelCase()} = \"{predicateCheck}\" " +
-                $"OR c.{nameof(MutexItem.LeaseExpiry).ToCamelCase()} < \"{DateTime.UtcNow.ToString("O")}\""
+                $"OR c.{nameof(MutexItem.LeaseExpiry).ToCamelCase()} < \"{DateTime.UtcNow:O}\""
             };
 
             try

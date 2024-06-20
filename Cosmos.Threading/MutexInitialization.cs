@@ -29,6 +29,9 @@ using System.Net;
 
 namespace Cosmos.Threading
 {
+    /// <summary>
+    /// Class for initializing the mutex cosmos container and mutex instance
+    /// </summary>
     public class MutexInitialization
     {
         private readonly CosmosClient _client;
@@ -53,6 +56,11 @@ namespace Cosmos.Threading
         }
 
         /// <summary>
+        /// The partition key path
+        /// </summary>
+        public static string PartitionKeyPath => "/id";
+
+        /// <summary>
         /// Initialize the default mutex instance
         /// </summary>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to cancel the operation</param>
@@ -73,23 +81,11 @@ namespace Cosmos.Threading
         {
             _logger.LogDebug("Initializing Mutex Id: [{id}]", mutexName);
 
-            var containerResponse = await _client
-                .GetDatabase(_options.Value.DatabaseName)
-                .CreateContainerIfNotExistsAsync(new ContainerProperties()
-                {
-                    Id = Mutex.MutexContainerName,
-                    PartitionKeyPath = "/id"
-                },
-                cancellationToken: cancellationToken);
-
-            _logger.LogDebug("Creating mutex container: [{container}] in database: [{database}] [{rus}] RUs",
-                containerResponse.Container.Id,
-                containerResponse.Container.Database,
-                containerResponse.RequestCharge);
+            var container = _client.GetContainer(_options.Value.DatabaseId, _options.Value.ContainerName);
 
             await CreateMutexInstanceIfNotExistAsync(
                 mutexName,
-                containerResponse.Container,
+                container,
                 cancellationToken);
         }
 

@@ -24,6 +24,9 @@
 
 namespace Cosmos.Threading
 {
+    /// <summary>
+    /// Defines the mutex interface operations
+    /// </summary>
     public interface IMutex
     {
         /// <summary>
@@ -48,7 +51,8 @@ namespace Cosmos.Threading
         /// <param name="leaseExpiry">The maximum length if time that the mutex can be held</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/> to cancel the operation</param>
         /// <returns></returns>
-        /// The owner must be consistent between <seealso cref="AcquireAsync(string, string TimeSpan, CancellationToken)"/> and <seealso cref="ReleaseAsync(string, string, CancellationToken)"/>
+        /// <remarks>
+        /// The owner must be consistent between <seealso cref="AcquireAsync(string, string, TimeSpan, CancellationToken)"/> and <seealso cref="ReleaseAsync(string, string, CancellationToken)"/>
         /// The <paramref name="leaseExpiry"/> sets the upper limit for the mutex lease.
         /// After this time the mutex is released and can be acquired again by another process. 
         /// </remarks>
